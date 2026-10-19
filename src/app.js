@@ -1,27 +1,33 @@
-const express = require('express')
-const PORT = 3000
-const app = express()
+const express = require("express");
+const adminAuth = require("./middlewares/auth");
+const app = express();
+const connectDB = require("./config/db");
+const User = require("./models/user");
+
+app.use(express.json());
+app.post('/signup', async(req, res) => {
+    const newUser = new User(req.body);
+
+    try {
+        const savedUser = await newUser.save();
+        res.status(200).json(savedUser).send({messge: "User Created Successfully"});
+    }catch(err) {
+        res.status(400).json(err);
+    }
+})
 
 
+connectDB().then(() => {
+            console.log("DB Connected Successfully");
+            app.listen(3000, () => {
+            console.log("Server is Running on PORT", 3000);
+        });
+    }).catch((err) => {
+            console.log("DB Connection Failed", err);
+});
 
-app.get("/hello", (req, res) => {
-    res.send("Hello you are on HELLO HELLO HELLO Page")
-})
-app.get(/.*fly$/, (req, res) => {
-    res.send("Hello you are on fist name is")
-})
+app.use("/admin", adminAuth);
 
-// User ID with Query : test?id=101
-app.post("/test", (req, res) => {
-    console.log(req.query)
-    res.send("Hello you are on TEST Page")
+app.get('/admin/user', (req, res) => {
+    res.send("User is on admin/user path")
 })
-// USER Id with Params : test/101
-app.post("/test/:id", (req, res) => {
-    console.log(req.params)
-    res.send("Hello you are on TEST Page")
-})
-app.get("/", (req, res) => {
-    res.send("Hello you are on Home Page")
-})
-app.listen(PORT, ()=> console.log("Port is listing on PORT", PORT))
