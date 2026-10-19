@@ -30,6 +30,16 @@ app.get('/user', async(req, res) => {
     }
 })
 
+// Find All Users
+app.get('/users', async(req,res)=>{
+    try{
+        const user = await User.find()
+        return res.status(200).json(user).send({message: "Users Found Successfully"});
+    }catch(err){
+        res.status(400).json(err).send({message: "Something went wrong"})
+    }
+})
+
 connectDB().then(() => {
             console.log("DB Connected Successfully");
             app.listen(3000, () => {
