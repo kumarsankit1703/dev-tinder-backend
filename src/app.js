@@ -40,6 +40,17 @@ app.get('/users', async(req,res)=>{
     }
 })
 
+// Delete User by ID
+app.delete('/user', async  (req, res) => {
+    const userId = req.body.userId;
+    try{
+        const user = await User.findByIdAndDelete(userId);
+        return res.status(200).json(user).send({message: "User Deleted Successfully"});
+    }catch(err){
+        res.status(400).json(err).send({message: "User Not Found"});
+    }
+})
+
 connectDB().then(() => {
             console.log("DB Connected Successfully");
             app.listen(3000, () => {
