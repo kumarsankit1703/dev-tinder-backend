@@ -5,6 +5,7 @@ const connectDB = require("./config/db");
 const User = require("./models/user");
 
 app.use(express.json());
+// Sign-UP User
 app.post('/signup', async(req, res) => {
     const newUser = new User(req.body);
 
@@ -16,6 +17,18 @@ app.post('/signup', async(req, res) => {
     }
 })
 
+// Find User by ID
+
+app.get('/user', async(req, res) => {
+    const userName = req.body.firstName
+
+    try{
+        const user = await User.findOne({firstName: userName});
+        return res.status(200).json(user).send({message: "User Found Successfully"});
+    }catch(err) {
+        res.status(400).json(err).send({message: "User Not Found"});
+    }
+})
 
 connectDB().then(() => {
             console.log("DB Connected Successfully");
