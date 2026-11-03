@@ -4,29 +4,36 @@ const app = express();
 const connectDB = require("./config/db");
 const User = require("./models/user");
 const { validateUserData } = require("./utills/validation");
+const bcrypt = require("bcrypt");
+const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
 
 app.use(express.json());
+app.use(cookieParser());
 // Sign-UP User
 app.post("/signup", async (req, res) => {
-  const newUser = new User(req.body);
-
   try {
     //  Validate the Req.body User data
     validateUserData(req);
 
     // Password Hash
-    const { password, email, firstName, lastName } = req.body;
+    const { password, email, firstName, lastName, gender, age, skills } = req.body;
     const isHashPassword = await bcrypt.hash(password, 10);
 
-    const savedUser = await userData.save({
+    const newUser = new User({
       firstName,
       lastName,
       email,
       password: isHashPassword,
+      gender,
+      age,
+      skills
     });
-    res
+
+    const saveNewUser = await newUser.save();
+    return res
       .status(200)
-      .json(savedUser)
+      .json(saveNewUser)
       .send({ messge: "User Created Successfully" });
   } catch (err) {
     res.status(400).send({ message: "User Not Created", error: err.message });
@@ -35,29 +42,50 @@ app.post("/signup", async (req, res) => {
 
 // Login User
 app.post("/login", async (req, res) => {
-  const { email, password } = req.body;
   try {
+    const { email, password } = req.body;
     const user = await User.findOne({ email });
     if (!user) {
       throw new Error("User Not Found");
     }
-    const isPasswordMatch = await bcrype.compare(password, user.password);
+
+    const isPasswordMatch = await bcrypt.compare(password, user.password);
     if (!isPasswordMatch) {
       throw new Error("Password is incorrect");
     }
 
-    res.status(200).json(user).send({ message: "User Logged in Successfully" });
+    if (isPasswordMatch) {
+      // Create JWT Token
+      const hashJWTtoken = await jwt.sign({userId: user._id}, "#DevUser@123")
+
+      res.cookie(
+        "token",
+        hashJWTtoken,
+      );
+      res
+        .status(200)
+        .json(user)
+        .send({ message: "User Logged In Successfully" });
+    }
   } catch (err) {
     res.status(400).send({ message: "User Not Found", error: err.message });
   }
 });
 
-// Find User by ID
+// Find User by Email
 app.get("/user", async (req, res) => {
-  const userName = req.body.firstName;
+  const email = req.body.email;
 
   try {
-    const user = await User.findOne({ firstName: userName });
+    const user = await User.findOne({ email });
+    const {token} = req.cookies;
+
+    if(!token) {
+      throw new Error("Token Not Found");
+    }
+
+    const decodeMessage  = await jwt.verify(token, "#DevUser@123");
+    console.log("Decoded Message", decodeMessage);
     return res
       .status(200)
       .json(user)
