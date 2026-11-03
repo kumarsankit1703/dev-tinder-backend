@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const validator = require("validator");
 
 const userSchema = new mongoose.Schema({
   firstName: {
@@ -19,7 +20,12 @@ const userSchema = new mongoose.Schema({
     lowercase: true,
     trim: true,
     required: true,
-    unique: true
+    unique: true,
+    validate(value) {
+      if(!validator.isEmail(value)){
+        throw new Error("Email is invalid")
+      }
+    }
   },
   age: {
     type: Number,
@@ -38,10 +44,20 @@ const userSchema = new mongoose.Schema({
   password: {       
     type: String,
     required: true,
+    validate(value) {
+      if(!validator.isStrongPassword(value, {minLength: 8, minLowercase: 1, minUppercase: 1, minNumbers: 1, minSymbols: 1})){
+        throw new Error("Password is not strong enough")
+      }
+    }
   },
   profilePhoto :{
       type: String,
-      default: "https://res.cloudinary.com/dxjv7gq3k/image/upload/v1690911680/Dev-Tinder-Backend/Default-Profile-Picture-1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_q6z8qf.png"
+      default: "https://res.cloudinary.com/dxjv7gq3k/image/upload/v1690911680/Dev-Tinder-Backend/Default-Profile-Picture-1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_q6z8qf.png",
+      validate(value) {
+        if(!validator.isURL(value)){
+          throw new Error("Profile Photo must be a valid URL")
+        }
+      }
     },
   about:{
     type: String,
